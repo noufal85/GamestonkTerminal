@@ -30,7 +30,7 @@ papermill = "^2.3.2"
 torch = {version = "1.7.1", optional = true}
 transformers = {version = "3.5.1", optional = true}
 fbprophet = {version = "0.6", optional = true}
-pmdarima = {version = "1.8.0", optional = true}
+pmdarima = {version = "1.8.0", optional = false}
 tensorflow = {version = "2.4.1", optional = true}
 flair = {version = "0.7", optional = true}
 holidays = "^0.10"
@@ -54,6 +54,14 @@ detecta = "^0.0.5"
 tradingview-ta = "^3.2.3"
 finvizfinance = "^0.9.3"
 Pillow = "^8.2.0"
+statsmodels = "^0.12.2"
+tabulate = "^0.8.9"
+pyportfolioopt = "^1.4.1"
+selenium = "^3.141.0"
+python-coinmarketcap = "^0.2"
+oandapyV20 = "^0.6.3"
+degiroapi = "^0.9.5"
+valinvest = "^0.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

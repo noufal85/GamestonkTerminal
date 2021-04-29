@@ -9,13 +9,15 @@
 * [Due Diligence](#Due-Diligence-)
 * [Prediction Techniques](#Prediction-Techniques-)
 * [Portfolio Analysis](#Portfolio-Analysis-)
+* [Portfolio Optimization](#Portfolio-Optimization-)
 * [Cryptocurrencies](#Cryptocurrencies-)
 * [Comparison Analysis](#Comparison-Analysis-)
 * [Exploratory Data Analysis](#Exploratory-Data-Analysis-)
 * [Residual Analysis](#Residual-Analysis-)
-* [FRED](#FRED-)
+* [Economic Data](#Econ-)
 * [Options](#Options-)
 * [Screener](#Screener-)
+* [Forex](#Forex-)
 
 ## Main
 
@@ -23,9 +25,11 @@ The main menu allows the following commands:
 ```
 load -t S_TICKER [-s S_START_DATE] [-i {1,5,15,30,60}]
 ```
-   * Load stock ticker to perform analysis on
+   * Load stock ticker to perform analysis on. When the data source is 'yf', an Indian ticker can be loaded by using '.NS' at the end, e.g. 'SBIN.NS'. See available market in https://help.yahoo.com/kb/exchanges-data-providers-yahoo-finance-sln2310.html.
      * -s : The starting date (format YYYY-MM-DD) of the stock
      * -i : Intraday stock minutes
+     * --source : Source of historical data. 'yf' and 'av' available. Default 'yf'
+     * -p : Pre/After market hours. Only works for 'yf' source, and intraday data
 
 **Note:** Until a ticker is loaded, the menu will only show *disc* and *sen* menu, as the others require a ticker being provided.
 
@@ -33,6 +37,7 @@ load -t S_TICKER [-s S_START_DATE] [-i {1,5,15,30,60}]
 clear
 ```
    * Clear previously loaded stock ticker.
+
 ```
 view -t S_TICKER [-s S_START_DATE] [-i {1,5,15,30,60}] [--type N_TYPE]
 ```
@@ -76,6 +81,10 @@ Command|Description|Source
 `valuation`     |valuation of sectors, industry, country |[Finviz](https://finviz.com)
 `performance`   |performance of sectors, industry, country |[Finviz](https://finviz.com)
 `spectrum`      |spectrum of sectors, industry, country |[Finviz](https://finviz.com)
+`latest`        |latest news |[Seeking Alpha](https://seekingalpha.com/)
+`trending`      |trending news |[Seeking Alpha](https://seekingalpha.com/)
+`ratings `      |top ratings updates |[MarketBeat](https://marketbeat.com)
+`darkpool`      |dark pool tickers with growing activity |[FINRA](https://www.finra.org)
 
 &nbsp;
 
@@ -137,6 +146,7 @@ Command|Description
 ----- | ---------
 `screener`      |screen info about the company ([Finviz](https://finviz.com/))
 `mgmt`          |management team of the company ([Business Insider](https://markets.businessinsider.com/))
+`score`         |investing score from Warren Buffett, Joseph Piotroski and Benjamin Graham  ([FMP](https://financialmodelingprep.com/))
 [Market Watch API](https://markets.businessinsider.com/) |
 `income`        |income statement of the company
 `balance`       |balance sheet of the company
@@ -206,6 +216,8 @@ Command|Description|Source
 `sec`           |SEC filings |[MarketWatch](https://www.marketwatch.com/)
 `short`         |short interest |[Quandl](https://www.quandl.com/)
 `warnings`      |company warnings according to Sean Seah book |[MarketWatch](https://www.marketwatch.com/)
+`dp`            |dark pools (ATS) vs OTC data [FINRA](https://www.finra.org/#/)
+`ftd`           |display fails-to-deliver data [SEC](https://www.sec.gov)
 
 &nbsp;
 
@@ -238,12 +250,31 @@ Command|Description|Brokers
 `hold`    | view net holdings across all logins
 
 &nbsp;
+## Portfolio Optimization [»](portfolio_optimization/README.md)
+
+Command|Description
+------|------
+`add`| add ticker to optimize
+`select`| overwrite current tickers with new tickers
+`equal`| equally weighted
+`property`| weight according to selected info property (e.g. marketCap)
+`maxsharpe`| optimizes for maximal Sharpe ratio (a.k.a the tangency portfolio)
+`minvol`| optimizes for minimum volatility
+`maxquadutil`| maximises the quadratic utility, given some risk aversion
+`effret`| maximises return for a given target risk
+`effrisk`| minimises risk for a given target return
+`ef`| show the efficient frontier
+
+&nbsp;
+
+
 ## Cryptocurrency [»](cryptocurrency/README.md)
 
 Command|Description
 ------ | ------------
 `load`| load cryptocurrency data
 `view`| load and view cryptocurrency data
+`top` | view top coins from coinmarketcap
 
 &nbsp;
 ## Comparison Analysis [»](comparison_analysis/README.md)
@@ -292,9 +323,10 @@ Command|Description|Source
 `independence`  |tests independent and identically distributed (BDS) | [Wikipedia](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test#Testing_for_statistical_independence)
 
 &nbsp;
-## FRED [»](fred/README.md)
+## ECON [»](econ/README.md)
 Command|Description
 ------ | --------
+FRED Data     |
 `gdp`           | GDP
 `unemp`         | Unemployment Rate
 `t1`            | 1-Year Treasury Constant Maturity Rate
@@ -306,14 +338,19 @@ Command|Description
 `moodAAA`       | Moody's Seasoned AAA Corporate Bond Yield
 `usdcad`        | Canada / U.S. Foreign Exchange Rate (CAD per 1 USD)
 `cust`          | User Specified FRED Data - Please Specify --id
-
+VIX Data        |
+`view`          | Plots VIX Historical Data
 &nbsp;
 
 ## Options [»](options/README.md)
 Command|Description|Source
 ------ | --------|----
 `exp`           | see/set expiry date
-`volume`        | plot options trading volume / open interest |[Yahoo Finance](https://finance.yahoo.com/)
+`volume`        | volume + open interest options trading plot |[Yahoo Finance](https://finance.yahoo.com/)
+`vcalls`        | calls volume + open interest plot |[Yahoo Finance](https://finance.yahoo.com/)
+`vputs`         | puts volume + open interest plot |[Yahoo Finance](https://finance.yahoo.com/)
+`chains`        | displays option chains    |[Tradier](https://developer.tradier.com/)
+`info`          | display option information | [Barchart](https://barchart.com/)
 
 &nbsp;
 
@@ -331,6 +368,27 @@ ownership      |ownership (e.g. Float, Insider Own, Short Ratio)
 performance    |performance (e.g. Perf Week, Perf YTD, Volatility M)
 technical      |technical (e.g. Beta, SMA50, 52W Low, RSI, Change)
 signals        |view filter signals (e.g. -s top_gainers)
+
+&nbsp;
+
+
+## Forex [»](forex/README.md)
+Command|Description
+------ | --------
+summary      |display a summary of your account
+calendar     |get information about past or upcoming events which may impact the price
+list         |list your order history
+pending      |get information about pending orders
+cancel       |cancel a pending order by ID
+positions    |get information about your positions
+trades       |see a list of open trades
+closetrade   |close a trade by ID
+load         |specify an instrument to use
+candles      |get a candlestick chart for the forex instrument
+price        |show the current price for the forex instrument
+order        |place a limit order
+orderbook    |display the orderbook if Oanda provides one for the forex instrument
+positionbook |display the positionbook if Oanda provides one for the forex instrument
 
 
 &nbsp;

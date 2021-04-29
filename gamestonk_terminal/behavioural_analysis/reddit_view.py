@@ -36,6 +36,7 @@ def watchlist(l_args):
             return
 
         l_sub_reddits = [
+            "Superstonk",
             "pennystocks",
             "RobinHoodPennyStocks",
             "Daytrading",
@@ -189,17 +190,6 @@ def popular_tickers(l_args):
             wallstreetbets
         """,
     )
-    """
-    parser.add_argument(
-        "-d",
-        "--days",
-        action="store",
-        dest="n_days",
-        type=check_positive,
-        default=1,
-        help="look for the tickers from those n past days.",
-    )
-    """
 
     try:
         ns_parser = parse_known_args_and_warn(parser, l_args)
@@ -217,6 +207,7 @@ def popular_tickers(l_args):
                 l_sub_reddits = [ns_parser.s_subreddit]
         else:
             l_sub_reddits = [
+                "Superstonk",
                 "pennystocks",
                 "RobinHoodPennyStocks",
                 "Daytrading",
@@ -502,17 +493,6 @@ def spac(l_args):
         default=5,
         help="limit of posts with SPACs retrieved.",
     )
-    """
-    parser.add_argument(
-        "-d",
-        "--days",
-        action="store",
-        dest="n_days",
-        type=check_positive,
-        default=5,
-        help="look for the tickers from those n past days.",
-    )
-    """
 
     try:
         ns_parser = parse_known_args_and_warn(parser, l_args)
@@ -536,6 +516,7 @@ def spac(l_args):
         #    (datetime.today() - timedelta(days=ns_parser.n_days)).timestamp()
         # )
         l_sub_reddits = [
+            "Superstonk",
             "pennystocks",
             "RobinHoodPennyStocks",
             "Daytrading",

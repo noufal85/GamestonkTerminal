@@ -4,10 +4,11 @@ import argparse
 from typing import List
 import pandas as pd
 from prompt_toolkit.completion import NestedCompleter
+
 from gamestonk_terminal import feature_flags as gtff
 from gamestonk_terminal.helper_funcs import get_flair
 from gamestonk_terminal.menu import session
-from gamestonk_terminal.portfolio import rh_api, alp_api, ally_api
+from gamestonk_terminal.portfolio import rh_api, alp_api, ally_api, dg_api
 from gamestonk_terminal.portfolio.portfolio_helpers import (
     merge_portfolios,
     print_portfolio,
@@ -15,6 +16,7 @@ from gamestonk_terminal.portfolio.portfolio_helpers import (
 
 
 class PortfolioController:
+    """Portfolio Controller"""
 
     CHOICES = [
         "help",
@@ -26,6 +28,7 @@ class PortfolioController:
         "alphold",
         "alphist",
         "allyhold",
+        "dghold",
         "hold",
     ]
 
@@ -33,6 +36,7 @@ class PortfolioController:
         "rh",
         "alp",
         "ally",
+        "dg",
     ]
 
     def __init__(self):
@@ -44,10 +48,11 @@ class PortfolioController:
     @staticmethod
     def print_help(broker_list):
 
-        """ Print help """
+        """Print help"""
         print("\nBrokers Supported: rh   - Robinhood")
         print("                   alp  - Alpaca")
         print("                   ally - Ally Invest")
+        print("                   dg - Degiro")
         print("\nPortfolio:")
         print("   help          show this menu again")
         print(
@@ -69,6 +74,8 @@ class PortfolioController:
         print("   alphist       view alp portfolio history")
         print("Ally:")
         print("   allyhold      view ally holdings")
+        print("Degiro:")
+        print("   dghold        view dg holdings")
         print("\nMerge:")
         print("   hold          view net holdings across all logins")
         print("")
@@ -86,6 +93,8 @@ class PortfolioController:
         print("   alphist     plot historical alpaca portfolio")
         print("\nAlly:")
         print("   allyhold    view ally holdings")
+        print("\nDegiro:")
+        print("   dghold      view dg holdings")
         print("\nMerge:")
         print("   hold        view net holdings across all logins")
         print("")
@@ -129,6 +138,7 @@ class PortfolioController:
             if broker in self.BROKERS:
                 api = broker + "_api"
                 try:
+                    # pylint: disable=eval-used
                     eval(api + ".login()")
                     self.broker_list.add(broker)
                     logged_in = True
@@ -171,6 +181,13 @@ class PortfolioController:
             print(e)
             print("")
 
+    def call_dghold(self, _):
+        try:
+            dg_api.show_holdings()
+        except Exception as e:
+            print(e)
+            print("")
+
     def call_hold(self, _):
         holdings = pd.DataFrame(
             columns=["Symbol", "MarketValue", "Quantity", "CostBasis"]
@@ -179,7 +196,9 @@ class PortfolioController:
             print("Login to desired brokers\n")
         for broker in self.broker_list:
             holdings = pd.concat(
-                [holdings, eval(broker + "_api.return_holdings()")], axis=0
+                # pylint: disable=eval-used
+                [holdings, eval(broker + "_api.return_holdings()")],
+                axis=0,
             )
         self.merged_holdings = merge_portfolios(holdings)
         print_portfolio(self.merged_holdings)

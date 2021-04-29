@@ -4,6 +4,7 @@ __docformat__ = "numpy"
 import argparse
 import os
 from typing import List
+from matplotlib import pyplot as plt
 from prompt_toolkit.completion import NestedCompleter
 from gamestonk_terminal import feature_flags as gtff
 from gamestonk_terminal.helper_funcs import get_flair
@@ -19,11 +20,13 @@ from gamestonk_terminal.discovery import (
     spachero_view,
     unusual_whales_view,
     yahoo_finance_view,
+    marketbeat_view,
+    finra_ats_view,
 )
 
 
 class DiscoveryController:
-    """ Discovery Controller """
+    """Discovery Controller"""
 
     # Command choices
     CHOICES = [
@@ -45,6 +48,10 @@ class DiscoveryController:
         "valuation",
         "performance",
         "spectrum",
+        "ratings",
+        "latest",
+        "trending",
+        "darkpool",
     ]
 
     def __init__(self):
@@ -58,7 +65,7 @@ class DiscoveryController:
 
     @staticmethod
     def print_help():
-        """ Print help """
+        """Print help"""
 
         print("\nDiscovery Mode:")
         print("   help           show this discovery menu again")
@@ -86,6 +93,10 @@ class DiscoveryController:
         print("   valuation      valuation of sectors, industry, country [Finviz]")
         print("   performance    performance of sectors, industry, country [Finviz]")
         print("   spectrum       spectrum of sectors, industry, country [Finviz]")
+        print("   latest         latest news [Seeking Alpha]")
+        print("   trending       trending news [Seeking Alpha]")
+        print("   ratings        top ratings updates [MarketBeat]")
+        print("   darkpool       dark pool tickers with growing activity [FINRA]")
         print("")
 
     def switch(self, an_input: str):
@@ -186,6 +197,22 @@ class DiscoveryController:
             other_args, "spectrum"
         )
 
+    def call_latest(self, other_args: List[str]):
+        """Process latest command"""
+        seeking_alpha_view.latest_news_view(other_args)
+
+    def call_trending(self, other_args: List[str]):
+        """Process trending command"""
+        seeking_alpha_view.trending_news_view(other_args)
+
+    def call_ratings(self, other_args: List[str]):
+        """Process ratings command"""
+        marketbeat_view.ratings_view(other_args)
+
+    def call_darkpool(self, other_args: List[str]):
+        """Process darkpool command"""
+        finra_ats_view.dark_pool(other_args)
+
 
 def menu():
     """Discovery Menu"""
@@ -209,6 +236,8 @@ def menu():
             an_input = input(f"{get_flair()} (disc)> ")
 
         try:
+            plt.close("all")
+
             process_input = disc_controller.switch(an_input)
 
             if process_input is not None:

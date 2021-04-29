@@ -342,7 +342,7 @@ def _preprocess_split(df_stock, ns_parser):
 
 
 def _rescale_data(df_stock, ns_parser, scaler, yhat, idx_loop):
-    """Re-scale the data back and return the prediction dataframe. """
+    """Re-scale the data back and return the prediction dataframe."""
     if (ns_parser.s_preprocessing == "standardization") or (
         ns_parser.s_preprocessing == "normalization"
     ):
@@ -362,7 +362,7 @@ def _rescale_data(df_stock, ns_parser, scaler, yhat, idx_loop):
 def _plot_and_print_results(
     df_stock, ns_parser, df_future, df_pred, model_name, s_ticker
 ):
-    """Plot and print the results. """
+    """Plot and print the results."""
     # Plotting
     plt.figure(figsize=plot_autoscale(), dpi=PLOT_DPI)
     plt.plot(df_stock.index, df_stock["5. adjusted close"], lw=3)
@@ -408,27 +408,6 @@ def _plot_and_print_results(
         )
         plt.plot(df_pred.index, df_pred[df_pred.columns[0]], lw=2, c="tab:green")
     else:
-        """
-        # Looks too noisy to output all loops predictions
-        for idx_loop in range(ns_parser.n_loops):
-            plt.plot(
-                [df_stock.index[-1], df_pred.index[0]],
-                [
-                    df_stock["5. adjusted close"].values[-1],
-                    df_pred[df_pred.columns[idx_loop]].values[0],
-                ],
-                lw=0.5,
-                c="tab:green",
-                linestyle="--",
-            )
-            plt.plot(
-                df_pred.index,
-                df_pred[df_pred.columns[idx_loop]],
-                lw=1,
-                ls="--",
-                c="tab:green",
-            )
-        """
         df_quantiles = pd.DataFrame()
         df_quantiles["Quantile 10%"] = df_pred.quantile(0.1, axis=1)
         df_quantiles["Median"] = df_pred.quantile(0.5, axis=1)

@@ -19,6 +19,7 @@
 [![GitHub release](https://img.shields.io/github/release/DidierRLopes/GamestonkTerminal.svg?maxAge=3600)](https://github.com/DidierRLopes/GamestonkTerminal/releases)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+![Discord Shield](https://discordapp.com/api/guilds/831165782750789672/widget.png?style=shield)
 
 
 <!-- PROJECT LOGO -->
@@ -58,6 +59,7 @@
       <ul>
         <li><a href="#install">Install</a></li>
         <li><a href="#advanced-user-install---machine-learning">Advanced User Install - Machine Learning</a></li>
+        <li><a href="#update-terminal">Update Terminal</a></li>
         <li><a href="#api-keys">API Keys</a></li>
         <li><a href="#usage">Usage</a></li>
       </ul>
@@ -80,7 +82,7 @@ Gamestonk Terminal is an awesome stock and crypto market terminal that has been 
 
 Gamestonk Terminal provides a modern Python-based integrated environment for investment research, that allows the average joe retail trader to leverage state-of-the-art Data Science and Machine Learning technologies.
 
-As a modern Python-based environment, GamestonkTerminal opens access to numerous Python data libraries in Data Science (Pandas, Numpy, Scipy, Jupyter), Machine Learning (Pytorch, Tensorflow, Sklearn, Flair), and Data Acquisition (Beautiful Soup, and numerous third-party APIs). 
+As a modern Python-based environment, GamestonkTerminal opens access to numerous Python data libraries in Data Science (Pandas, Numpy, Scipy, Jupyter), Machine Learning (Pytorch, Tensorflow, Sklearn, Flair), and Data Acquisition (Beautiful Soup, and numerous third-party APIs).
 
 
 ## Getting Started
@@ -89,6 +91,11 @@ As a modern Python-based environment, GamestonkTerminal opens access to numerous
 This project was originally written and tested with Python 3.6.8. It should now support Python 3.6, 3.7, and 3.8.
 
 Our current recommendation is to use this project with Anaconda's Python distribution - either full [__Anaconda3 Latest__](https://repo.anaconda.com/archive/) or [__Miniconda3 Latest__](https://repo.anaconda.com/archive/). Several features in this project utilize Machine Learning. Machine Learning Python dependencies are optional. If you decided to add Machine Learning features at a later point, you will likely have better user experience with Anaconda's Python distribution.
+
+0. Star the project
+
+<img width="1272" alt="Captura de ecrã 2021-04-25, às 01 13 30" src="https://user-images.githubusercontent.com/25267873/115989986-e20cfe80-a5b8-11eb-8182-d6d87d092252.png">
+
 
 1. Install Anaconda
 
@@ -106,46 +113,54 @@ conda create -n gst python=3.6.8
 ```
 conda activate gst
 ```
-Note: At the end, you can deactivate it with: `conda deactivate`
+Note: At the end, you can deactivate it with: `conda deactivate`.
 
-4. Fork the Project
+4. Install git
+```
+conda install -c anaconda git
+````
+
+5. Clone the Project
 
 - Via HTTPS: `git clone https://github.com/DidierRLopes/GamestonkTerminal.git`
 - via SSH:  `git clone git@github.com:DidierRLopes/GamestonkTerminal.git`
 
-Navigate into the folder with: `cd GamestonkTerminal/`
+6. Navigate into the project's folder
 
-5. Install poetry
+```
+cd GamestonkTerminal/
+```
+
+7. Install poetry
 ```
 conda install poetry
 ```
 
-6. Install poetry dependencies
+7.5. If installing python 3.8
+```
+conda deactivate
+conda activate gst
+```
+*The `conda deactivate` -> `conda activate` in the middle is on purpose, this is sometimes required to avoid issues with poetry*
+
+8. Install poetry dependencies
 ```
 poetry install
 ```
 This is a library for package management, and ensures a smoother experience than: ``pip install -r requirements.txt``
 
-7.  You're ready to Gamestonk it!
+9.  You're ready to Gamestonk it!
 
 ```
 python terminal.py
 ```
+10. (Windows - Optional) Speeding up opening process in the future
 
-### Advanced User Install - Python 3.8
+After you've installed Gamestonk Terminal, you'll find a file named "Gamestonk Terminal.bat". You can use this file to open Gamestonk Terminal quicker. This file can be moved to your desktop if you'd like. If you run into issues while trying to run the batch file. If you run into issues with the batch files, edit the file and check to see if the directories match up. This file assumes you used the default directories when installing. 
 
-*Note that the `conda deactivate` -> `conda activate` in the middle is on purpose, this is sometimes required to avoid issues with poetry*
+**NOTE:** When you close the terminal and re-open it, the only command you need to re-call is `conda activate gst` before you call `python terminal.py` again.
 
-```
-conda create -n gst python=3.8.8
-conda activate gst
-conda install poetry
-conda deactivate
-conda activate gst
-poetry install
-conda install -c conda-forge fbprophet numpy=1.19.5 hdf5=1.10.5
-poetry install -E prediction
-```
+**TROUBLESHOOT:** If you are having troubles to install, check our *newest* <a href="https://github.com/DidierRLopes/GamestonkTerminal/blob/main/TROUBLESHOOT.md"><strong>troubleshoot page</strong></a>
 
 ### Advanced User Install - Machine Learning
 
@@ -164,13 +179,6 @@ ENABLE_PREDICT = os.getenv("GTFF_ENABLE_PREDICT") or True
 ```
 poetry install -E prediction
 ```
-*If you run into issues installing or `Cannot convert a symbolic Tensor...` at runtime, try this:*
-
-```
-conda install -c conda-forge fbprophet numpy=1.19.5 hdf5=1.10.5
-poetry install
-poetry install -E prediction
-```
 
 *If you would like to set up a docker image:*
 
@@ -179,49 +187,27 @@ poetry install -E prediction
 
 Note: The problem with docker is that it won't output matplotlib figures.
 
-*Commands that may help you in case of an error:
+### Update Terminal
 
-* `python -m pip install --upgrade pip`
-* `pip install pystan --upgrade`
-* `poetry update --lock`
+The terminal is constantly being updated with new features and bug fixes, hence, for your terminal to be update, you can run:
+```
+git pull
+```
+to get the latest changes.
 
-### Other issues
+If this fails due to the fact that you had modified some python files, and there's a conflict with the updates, you can use:
+```
+git stash
+```
 
-If you run into trouble with poetry and the advice above did not help, your best bet is to try
+Then, re-run `poetry install` or  `pip install -r requirements.txt` to get any new dependencies.
 
-1. `poetry update --lock`
+Once installation is finished, you're ready to gamestonk.
 
-2. `conda deactivate` -> `conda activate gst`, then try again
-
-3. Delete the poetry cache, then try again
-
-   | Platform | Location                        |
-   | -------- | ------------------------------- |
-   | Linux    | "~/.cache/pypoetry"             |
-   | Mac      | "~/Library/Caches/pypoetry"     |
-   | Windows  | "%localappdata%/pypoetry/cache" |
-
-4. Track down the offensive package and purge it from your anaconda `<environment_name>` folder, then try again (removing through conda can sometimes leave locks behind)
-
-   | Platform  | Location                                     |
-   | --------- | -------------------------------------------- |
-   | Linux/Mac | "~/anaconda3/envs" or "~/opt/anaconda3/envs" |
-   | Windows   | "%userprofile%/anaconda3/envs"               |
-
-5. Completely nuke your conda environment folder and make a new environment from scratch
-
-6. Reboot your computer and try again
-
-7. Submit a ticket on github
-
-### ModuleNotFoundError
-In the case when you run into an error of the form `ModuleNotFoundError: No module named '_______'`.  The solution is to
-install the missing package via pip.  
-
-If you get the error that `statsmodels` is not found, you would run
-* `pip install statsmodels`
-
-Then please submit an issue so that we can address why that was not imported.
+If you `stashed` your changes previously, you can un-stash them with:
+```
+git stash pop
+```
 
 ### API Keys
 
@@ -236,16 +222,24 @@ These are the ones where a key is necessary:
   * Financial Modeling Prep: https://financialmodelingprep.com/developer
   * FRED: https://fred.stlouisfed.org/docs/api/api_key.html
   * News API: https://newsapi.org
+  * Tradier: https://developer.tradier.com/getting_started
+  * Oanda API: https://developer.oanda.com
 
 When these are obtained, don't forget to update [config_terminal.py](/gamestonk_terminal/config_terminal.py).
 
-Alternatively, you can also set them to the following environment variables: GT_API_KEY_ALPHAVANTAGE, GT_API_KEY_FINANCIALMODELINGPREP, GT_API_KEY_QUANDL, GT_API_REDDIT_CLIENT_ID, GT_API_REDDIT_CLIENT_SECRET, GT_API_REDDIT_USERNAME, GT_API_REDDIT_USER_AGENT, GT_API_REDDIT_PASSWORD, GT_API_TWITTER_KEY, GT_API_TWITTER_SECRET_KEY, GT_API_TWITTER_BEARER_TOKEN, GT_API_POLYGON_KEY, GT_FRED_API_KEY, GT_API_NEWS_TOKEN.
+Alternatively, you can also set them to the following environment variables: GT_API_KEY_ALPHAVANTAGE, GT_API_KEY_FINANCIALMODELINGPREP, GT_API_KEY_QUANDL, GT_API_REDDIT_CLIENT_ID, GT_API_REDDIT_CLIENT_SECRET, GT_API_REDDIT_USERNAME, GT_API_REDDIT_USER_AGENT, GT_API_REDDIT_PASSWORD, GT_API_TWITTER_KEY, GT_API_TWITTER_SECRET_KEY, GT_API_TWITTER_BEARER_TOKEN, GT_API_POLYGON_KEY, GT_FRED_API_KEY, GT_API_NEWS_TOKEN, GT_OANDA_TOKEN, GT_OANDA_ACCOUNT, GT_TRADIER_TOKEN.
 
 Example:
 ```
 export GT_API_REDDIT_USERNAME=SexyYear
 ```
 
+Environment variables can also be set in a `.env` file at the top of the repo. This file is ignored by git so your API keys will stay secret. The above example stored in `.env` would be:
+```
+GT_API_REDDIT_USERNAME=SexyYear
+```
+
+Note that the `GT_API_REDDIT_USER_AGENT` is the name of the script that you set when obtained the Reddit API key.
 Note that it is not necessary to have a valid Alpha Vantage key to get daily OHLC values.
 
 ### Usage
@@ -322,6 +316,7 @@ Welcome to the club, and feel free to support the developers behind this amazing
 
 <a href="https://www.buymeacoffee.com/didierlopes" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 
+OR, if you prefer a coinbase crypto wallet: **3Pfx7NwGgmZsk7hQJxzHdp5rGBftUHVTiM**
 
 ## License
 
@@ -338,6 +333,12 @@ Distributed under the MIT License. See [LICENSE](https://github.com/DidierRLopes
 [Artem Veremy](https://www.linkedin.com/in/veremey/) - artem@veremey.net
 
 [James Maslek](https://www.linkedin.com/in/james-maslek-b6810186/) - jmaslek11@gmail.com
+
+Feel free to share loss porn, memes or any questions:
+
+![Discord Banner 2](https://discordapp.com/api/guilds/831165782750789672/widget.png?style=banner2)
+
+
 ## Acknowledgments
 
 * [VICE article](https://www.vice.com/en/article/qjp9vp/gamestonk-terminal-is-a-diy-meme-stock-version-of-bloomberg-terminal)
