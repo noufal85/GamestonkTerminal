@@ -4,6 +4,7 @@ import argparse
 
 import sys
 import os
+import subprocess
 from datetime import datetime, timedelta
 import pandas as pd
 import yfinance as yf
@@ -25,6 +26,7 @@ from gamestonk_terminal.main_helper import (
     view,
     candle,
     print_goodbye,
+    update_terminal,
 )
 from gamestonk_terminal.menu import session
 from gamestonk_terminal.papermill import papermill_controller as mill
@@ -61,6 +63,8 @@ def main():
     df_stock = pd.DataFrame()
     s_interval = "1440min"
 
+    update_succcess = False
+
     # Set stock by default to speed up testing
     # s_ticker = "BB"
     # ts = TimeSeries(key=cfg.API_KEY_ALPHAVANTAGE, output_format='pandas')
@@ -75,6 +79,8 @@ def main():
         "help",
         "quit",
         "q",
+        "reset",
+        "update",
         "clear",
         "load",
         "candle",
@@ -164,7 +170,11 @@ def main():
         if ns_known_args.opt == "help":
             should_print_help = True
 
-        elif (ns_known_args.opt == "quit") or (ns_known_args.opt == "q"):
+        elif (
+            (ns_known_args.opt == "quit")
+            or (ns_known_args.opt == "q")
+            or (ns_known_args.opt == "reset")
+        ):
             break
 
         elif ns_known_args.opt == "clear":
@@ -383,6 +393,10 @@ def main():
         elif ns_known_args.opt == "gov":
             b_quit = gov_controller.menu(s_ticker)
 
+        elif ns_known_args.opt == "update":
+            update_succcess = not update_terminal()
+            break
+
         else:
             print("Shouldn't see this command!")
             continue
@@ -393,7 +407,22 @@ def main():
         if not main_cmd:
             should_print_help = True
 
-    print_goodbye()
+    if not gtff.ENABLE_QUICK_EXIT:
+        if ns_known_args.opt == "reset" or update_succcess:
+            print("resetting...")
+
+            completed_process = subprocess.run(
+                "python terminal.py", shell=True, check=False
+            )
+            if completed_process.returncode != 0:
+                completed_process = subprocess.run(
+                    "python3 terminal.py", shell=True, check=False
+                )
+                if completed_process.returncode != 0:
+                    print("Unfortunately, resetting wasn't possible!\n")
+                    print_goodbye()
+        else:
+            print_goodbye()
 
 
 if __name__ == "__main__":
