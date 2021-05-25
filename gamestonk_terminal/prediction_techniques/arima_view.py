@@ -1,10 +1,14 @@
+""" ARIMA Model View """
+__docformat__ = "numpy"
+
 import argparse
+from typing import List
 import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
-from sklearn import neighbors
-from TimeSeriesCrossValidation import splitTrain
+import pmdarima
+from statsmodels.tsa.arima.model import ARIMA
 from gamestonk_terminal.helper_funcs import (
     check_positive,
     parse_known_args_and_warn,
@@ -25,26 +29,34 @@ from gamestonk_terminal import feature_flags as gtff
 register_matplotlib_converters()
 
 
-def k_nearest_neighbors(l_args, s_ticker, df_stock):
+def arima(other_args: List[str], s_ticker: str, df_stock: pd.DataFrame):
+    """
+    ARIMA prediction
+    Parameters
+    ----------
+    other_args: List[str]
+        Argparse arguments
+    s_ticker: str
+        ticker
+    df_stock: pd.DataFrame
+        Dataframe of prices
+
+    """
     parser = argparse.ArgumentParser(
         add_help=False,
-        prog="knn",
+        prog="arima",
         description="""
-            K nearest neighbors is a simple algorithm that stores all
-            available cases and predict the numerical target based on a similarity measure
-            (e.g. distance functions).
+            In statistics and econometrics, and in particular in time series analysis, an
+            autoregressive integrated moving average (ARIMA) model is a generalization of an
+            autoregressive moving average (ARMA) model. Both of these models are fitted to time
+            series data either to better understand the data or to predict future points in the
+            series (forecasting). ARIMA(p,d,q) where parameters p, d, and q are non-negative
+            integers, p is the order (number of time lags) of the autoregressive model, d is the
+            degree of differencing (the number of times the data have had past values subtracted),
+            and q is the order of the moving-average model.
         """,
     )
 
-    parser.add_argument(
-        "-i",
-        "--input",
-        action="store",
-        dest="n_inputs",
-        type=check_positive,
-        default=40,
-        help="number of days to use for prediction.",
-    )
     parser.add_argument(
         "-d",
         "--days",
@@ -55,22 +67,38 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
         help="prediction days.",
     )
     parser.add_argument(
-        "-j",
-        "--jumps",
+        "-i",
+        "--ic",
         action="store",
-        dest="n_jumps",
-        type=check_positive,
-        default=1,
-        help="number of jumps in training data.",
+        dest="s_ic",
+        type=str,
+        default="aic",
+        choices=["aic", "aicc", "bic", "hqic", "oob"],
+        help="information criteria.",
     )
     parser.add_argument(
-        "-n",
-        "--neighbors",
+        "-s",
+        "--seasonal",
+        action="store_true",
+        default=False,
+        dest="b_seasonal",
+        help="Use weekly seasonal data.",
+    )
+    parser.add_argument(
+        "-o",
+        "--order",
         action="store",
-        dest="n_neighbors",
-        type=check_positive,
-        default=20,
-        help="number of neighbors to use on the algorithm.",
+        dest="s_order",
+        type=str,
+        help="arima model order (p,d,q) in format: p,d,q.",
+    )
+    parser.add_argument(
+        "-r",
+        "--results",
+        action="store_true",
+        dest="b_results",
+        default=False,
+        help="results about ARIMA summary flag.",
     )
     parser.add_argument(
         "-e",
@@ -83,22 +111,25 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
     )
 
     try:
-        ns_parser = parse_known_args_and_warn(parser, l_args)
+        ns_parser = parse_known_args_and_warn(parser, other_args)
         if not ns_parser:
             return
 
         # BACKTESTING
         if ns_parser.s_end_date:
+
             if ns_parser.s_end_date < df_stock.index[0]:
                 print(
                     "Backtesting not allowed, since End Date is older than Start Date of historical data\n"
                 )
                 return
 
-            if ns_parser.s_end_date < get_next_stock_market_days(
-                last_stock_day=df_stock.index[0],
-                n_next_days=ns_parser.n_inputs + ns_parser.n_days,
-            )[-1]:
+            if (
+                ns_parser.s_end_date
+                < get_next_stock_market_days(
+                    last_stock_day=df_stock.index[0], n_next_days=5 + ns_parser.n_days
+                )[-1]
+            ):
                 print(
                     "Backtesting not allowed, since End Date is too close to Start Date to train model\n"
                 )
@@ -117,41 +148,68 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
             df_future = df_stock[future_index[0] : future_index[-1]]
             df_stock = df_stock[: ns_parser.s_end_date]
 
-        # Split training data
-        stock_x, stock_y = splitTrain.split_train(
-            df_stock["5. adjusted close"].values,
-            ns_parser.n_inputs,
-            ns_parser.n_days,
-            ns_parser.n_jumps,
-        )
-
-        if not stock_x:
-            print("Given the model parameters more training data is needed.\n")
-            return
-
         # Machine Learning model
-        knn = neighbors.KNeighborsRegressor(n_neighbors=ns_parser.n_neighbors)
-        knn.fit(stock_x, stock_y)
+        if ns_parser.s_order:
+            t_order = tuple(int(ord) for ord in ns_parser.s_order.split(","))
+            model = ARIMA(df_stock["5. adjusted close"].values, order=t_order).fit()
+            l_predictions = model.predict(
+                start=len(df_stock["5. adjusted close"]) + 1,
+                end=len(df_stock["5. adjusted close"]) + ns_parser.n_days,
+            )
+        else:
+            if ns_parser.b_seasonal:
+                model = pmdarima.auto_arima(
+                    df_stock["5. adjusted close"].values,
+                    error_action="ignore",
+                    seasonal=True,
+                    m=5,
+                    information_criteria=ns_parser.s_ic,
+                )
+            else:
+                model = pmdarima.auto_arima(
+                    df_stock["5. adjusted close"].values,
+                    error_action="ignore",
+                    seasonal=False,
+                    information_criteria=ns_parser.s_ic,
+                )
+            l_predictions = [
+                i if i > 0 else 0 for i in model.predict(n_periods=ns_parser.n_days)
+            ]
 
         # Prediction data
-        l_predictions = knn.predict(
-            df_stock["5. adjusted close"].values[-ns_parser.n_inputs :].reshape(1, -1)
-        )[0]
         l_pred_days = get_next_stock_market_days(
             last_stock_day=df_stock["5. adjusted close"].index[-1],
             n_next_days=ns_parser.n_days,
         )
         df_pred = pd.Series(l_predictions, index=l_pred_days, name="Price")
 
+        if ns_parser.b_results:
+            print(model.summary())
+            print("")
+
         # Plotting
         plt.figure(figsize=plot_autoscale(), dpi=PLOT_DPI)
         plt.plot(df_stock.index, df_stock["5. adjusted close"], lw=2)
-        s_knn = f"{ns_parser.n_neighbors}-Nearest Neighbors on {s_ticker}"
-        # BACKTESTING
-        if ns_parser.s_end_date:
-            plt.title(f"BACKTESTING: {s_knn} - {ns_parser.n_days} days prediction")
+        if ns_parser.s_order:
+            # BACKTESTING
+            if ns_parser.s_end_date:
+                plt.title(
+                    f"BACKTESTING: ARIMA {str(t_order)} on {s_ticker} - {ns_parser.n_days} days prediction"
+                )
+            else:
+                plt.title(
+                    f"ARIMA {str(t_order)} on {s_ticker} - {ns_parser.n_days} days prediction"
+                )
         else:
-            plt.title(f"{s_knn} - {ns_parser.n_days} days prediction")
+            # BACKTESTING
+            if ns_parser.s_end_date:
+                plt.title(
+                    f"BACKTESTING: ARIMA {model.order} on {s_ticker} - {ns_parser.n_days} days prediction"
+                )
+            else:
+                plt.title(
+                    f"ARIMA {model.order} on {s_ticker} - {ns_parser.n_days} days prediction"
+                )
         plt.xlim(
             df_stock.index[0], get_next_stock_market_days(df_pred.index[-1], 1)[-1]
         )
@@ -237,7 +295,8 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
             plt.title("BACKTESTING: Real data price versus Prediction")
             plt.xlim(df_stock.index[-1], df_pred.index[-1] + datetime.timedelta(days=1))
             plt.xticks(
-                [df_stock.index[-1], df_pred.index[-1] + datetime.timedelta(days=1)]
+                [df_stock.index[-1], df_pred.index[-1] + datetime.timedelta(days=1)],
+                visible=True,
             )
             plt.ylabel("Share Price ($)")
             plt.grid(b=True, which="major", color="#666666", linestyle="-")
@@ -279,7 +338,8 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
             )
             plt.xlim(df_stock.index[-1], df_pred.index[-1] + datetime.timedelta(days=1))
             plt.xticks(
-                [df_stock.index[-1], df_pred.index[-1] + datetime.timedelta(days=1)]
+                [df_stock.index[-1], df_pred.index[-1] + datetime.timedelta(days=1)],
+                visible=True,
             )
             plt.xlabel("Time")
             plt.ylabel("Prediction Error (%)")
@@ -299,6 +359,7 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
             df_pred["Real"] = df_future["5. adjusted close"]
 
             if gtff.USE_COLOR:
+
                 patch_pandas_text_adjustment()
 
                 print("Time         Real [$]  x  Prediction [$]")
@@ -319,5 +380,4 @@ def k_nearest_neighbors(l_args, s_ticker, df_stock):
         print("")
 
     except Exception as e:
-        print(e)
-        print("")
+        print(e, "\n")

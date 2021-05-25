@@ -4,10 +4,10 @@ __docformat__ = "numpy"
 import argparse
 from typing import List
 from matplotlib import pyplot as plt
+from prompt_toolkit.completion import NestedCompleter
 from gamestonk_terminal import feature_flags as gtff
 from gamestonk_terminal.helper_funcs import get_flair
 from gamestonk_terminal.menu import session
-from prompt_toolkit.completion import NestedCompleter
 from gamestonk_terminal.government import quiverquant_view
 
 
@@ -23,6 +23,21 @@ class GovController:
         "buy_congress",
         "sell_congress",
         "congress",
+        "raw_congress",
+        "last_senate",
+        "buy_senate",
+        "sell_senate",
+        "senate",
+        "raw_senate",
+        "last_house",
+        "buy_house",
+        "sell_house",
+        "house",
+        "raw_house",
+        "last_contracts",
+        "sum_contracts",
+        "raw_contracts",
+        "contracts",
     ]
 
     def __init__(
@@ -37,7 +52,6 @@ class GovController:
             choices=self.CHOICES,
         )
 
-    @staticmethod
     def print_help(self):
         """Print help"""
 
@@ -48,13 +62,28 @@ class GovController:
         print("")
         print("Explore:")
         print("   last_congress    last congress trading")
-        print("   buy_congress     top buy congress tickers")
-        print("   sell_congress    top sell congress tickers")
+        print("   buy_congress     plot top buy congress tickers")
+        print("   sell_congress    plot top sell congress tickers")
+        print("   last_senate      last senate trading")
+        print("   buy_senate       plot top buy senate tickers")
+        print("   sell_senate      plot top sell senate tickers")
+        print("   last_house       last house trading")
+        print("   buy_house        plot top buy house tickers")
+        print("   sell_house       plot top sell house tickers")
+        print("   last_contracts   last government contracts")
+        print("   sum_contracts    plot sum of last government contracts")
         print("")
         if self.ticker:
             print(f"Ticker: {self.ticker}")
-            print("   congress         congress trades on the ticker")
-        print("")
+            print("   raw_congress     raw congress trades on the ticker")
+            print("   congress         plot congress trades on the ticker")
+            print("   raw_senate       raw senate trades on the ticker")
+            print("   senate           plot senate trades on the ticker")
+            print("   raw_house        raw house trades on the ticker")
+            print("   house            plot house trades on the ticker")
+            print("   raw_contracts    raw contracts on the ticker")
+            print("   contracts        plot sum of contracts on the ticker")
+            print("")
         return
 
     def switch(self, an_input: str):
@@ -75,7 +104,7 @@ class GovController:
 
     def call_help(self, _):
         """Process Help command"""
-        self.print_help(self)
+        self.print_help()
 
     def call_q(self, _):
         """Process Q command - quit the menu"""
@@ -87,19 +116,79 @@ class GovController:
 
     def call_last_congress(self, other_args: List[str]):
         """Process last_congress command"""
-        quiverquant_view.last_congress(other_args)
+        quiverquant_view.last_government(other_args, "congress")
 
     def call_buy_congress(self, other_args: List[str]):
         """Process buy_congress command"""
-        quiverquant_view.buy_congress(other_args)
+        quiverquant_view.buy_government(other_args, "congress")
 
     def call_sell_congress(self, other_args: List[str]):
         """Process sell_congress command"""
-        quiverquant_view.sell_congress(other_args)
+        quiverquant_view.sell_government(other_args, "congress")
+
+    def call_raw_congress(self, other_args: List[str]):
+        """Process raw_congress command"""
+        quiverquant_view.raw_government(other_args, self.ticker, "congress")
 
     def call_congress(self, other_args: List[str]):
         """Process congress command"""
-        quiverquant_view.congress(other_args, self.ticker)
+        quiverquant_view.government_trading(other_args, self.ticker, "congress")
+
+    def call_last_senate(self, other_args: List[str]):
+        """Process last_senate command"""
+        quiverquant_view.last_government(other_args, "senate")
+
+    def call_buy_senate(self, other_args: List[str]):
+        """Process buy_senate command"""
+        quiverquant_view.buy_government(other_args, "senate")
+
+    def call_sell_senate(self, other_args: List[str]):
+        """Process sell_senate command"""
+        quiverquant_view.sell_government(other_args, "senate")
+
+    def call_raw_senate(self, other_args: List[str]):
+        """Process raw_senate command"""
+        quiverquant_view.raw_government(other_args, self.ticker, "senate")
+
+    def call_senate(self, other_args: List[str]):
+        """Process senate command"""
+        quiverquant_view.government_trading(other_args, self.ticker, "senate")
+
+    def call_last_house(self, other_args: List[str]):
+        """Process last_house command"""
+        quiverquant_view.last_government(other_args, "house")
+
+    def call_buy_house(self, other_args: List[str]):
+        """Process buy_house command"""
+        quiverquant_view.buy_government(other_args, "house")
+
+    def call_sell_house(self, other_args: List[str]):
+        """Process sell_house command"""
+        quiverquant_view.sell_government(other_args, "house")
+
+    def call_raw_house(self, other_args: List[str]):
+        """Process raw_house command"""
+        quiverquant_view.raw_government(other_args, self.ticker, "house")
+
+    def call_house(self, other_args: List[str]):
+        """Process house command"""
+        quiverquant_view.government_trading(other_args, self.ticker, "house")
+
+    def call_last_contracts(self, other_args: List[str]):
+        """Process last_contracts command"""
+        quiverquant_view.last_contracts(other_args)
+
+    def call_sum_contracts(self, other_args: List[str]):
+        """Process sum_contracts command"""
+        quiverquant_view.sum_contracts(other_args)
+
+    def call_raw_contracts(self, other_args: List[str]):
+        """Process raw_contracts command"""
+        quiverquant_view.raw_contracts(other_args, self.ticker)
+
+    def call_contracts(self, other_args: List[str]):
+        """Process contracts command"""
+        quiverquant_view.contracts(other_args, self.ticker)
 
 
 def menu(ticker: str):

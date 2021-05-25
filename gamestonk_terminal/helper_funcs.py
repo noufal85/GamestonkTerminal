@@ -59,7 +59,7 @@ def plot_view_stock(df, symbol):
     plt.ylabel("Volume")
     _ = axVolume.twinx()
     plt.plot(df.index, df.iloc[:, :-1])
-    plt.title(symbol + " (Time Series)")
+    plt.title(symbol.upper() + " (Time Series)")
     plt.xlim(df.index[0], df.index[-1])
     plt.xlabel("Time")
     plt.ylabel("Share Price ($)")
@@ -326,10 +326,10 @@ def text_adjustment_join_unicode(self, lines, sep=""):
 def text_adjustment_adjoin(self, space, *lists, **kwargs):
     # Add space for all but the last column:
     pads = ([space] * (len(lists) - 1)) + [0]
-    max_col_len = max([len(col) for col in lists])
+    max_col_len = max(len(col) for col in lists)
     new_cols = []
     for col, pad in zip(lists, pads):
-        width = max([self.len(s) for s in col]) + pad
+        width = max(self.len(s) for s in col) + pad
         c = self.justify(col, width, mode="left")
         # Add blank cells to end of col if needed for different col lens:
         if len(col) < max_col_len:

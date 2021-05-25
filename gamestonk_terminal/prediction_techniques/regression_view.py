@@ -1,9 +1,13 @@
+""" Regression View"""
+__docformat__ = "numpy"
+
 import argparse
+from typing import List
 import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
-from TimeSeriesCrossValidation import splitTrain
+from tsxv import splitTrain
 from sklearn import linear_model
 from sklearn import pipeline
 from sklearn import preprocessing
@@ -34,7 +38,23 @@ QUADRATIC = 2
 CUBIC = 3
 
 
-def regression(l_args, s_ticker, df_stock, polynomial):
+def regression(
+    other_args: List[str], s_ticker: str, df_stock: pd.DataFrame, polynomial: int
+):
+    """
+    Train a regression model
+    Parameters
+    ----------
+    other_args: List[str]
+        Argparse arguments
+    s_ticker: str
+        Stock ticker
+    df_stock: pd.DataFrame
+        Dataframe of stock prices
+    polynomial: int
+        Order of polynomial
+
+    """
     parser = argparse.ArgumentParser(
         add_help=False,
         prog="regression",
@@ -95,7 +115,7 @@ def regression(l_args, s_ticker, df_stock, polynomial):
         )
 
     try:
-        ns_parser = parse_known_args_and_warn(parser, l_args)
+        ns_parser = parse_known_args_and_warn(parser, other_args)
         if not ns_parser:
             return
 
@@ -152,9 +172,14 @@ def regression(l_args, s_ticker, df_stock, polynomial):
             )
 
         model.fit(stock_x, stock_y)
-        l_predictions = model.predict(
-            df_stock["5. adjusted close"].values[-ns_parser.n_inputs :].reshape(1, -1)
-        )[0]
+        l_predictions = [
+            i if i > 0 else 0
+            for i in model.predict(
+                df_stock["5. adjusted close"]
+                .values[-ns_parser.n_inputs :]
+                .reshape(1, -1)
+            )[0]
+        ]
 
         # Prediction data
         l_pred_days = get_next_stock_market_days(
