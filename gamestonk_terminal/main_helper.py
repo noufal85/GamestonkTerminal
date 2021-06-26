@@ -1,15 +1,24 @@
+"""Main helper"""
+__docformat__ = "numpy"
 import argparse
-from sys import stdout
+from typing import List
+import os
+import sys
+import subprocess
 import random
 from datetime import datetime, timedelta
-import subprocess
 import hashlib
+from colorama import Fore, Style
 import matplotlib.pyplot as plt
+from numpy.core.fromnumeric import transpose
 import pandas as pd
 from alpha_vantage.timeseries import TimeSeries
 import mplfinance as mpf
 import yfinance as yf
 import pytz
+from tabulate import tabulate
+import git
+
 
 from gamestonk_terminal.helper_funcs import (
     valid_date,
@@ -23,95 +32,12 @@ from gamestonk_terminal.helper_funcs import (
 
 from gamestonk_terminal import config_terminal as cfg
 from gamestonk_terminal import feature_flags as gtff
+from gamestonk_terminal import thought_of_the_day as thought
 from gamestonk_terminal.technical_analysis import trendline_api as trend
 
 
-def print_help(s_ticker, s_start, s_interval, b_is_market_open):
-    """Print help"""
-    print("What do you want to do?")
-    print("   help        help to see this menu again")
-    print("   update      update terminal from remote")
-    print("   reset       reset terminal and reload configs")
-    print("   quit        to abandon the program")
-    print("")
-    print("   clear       clear a specific stock ticker from analysis")
-    print("   load        load a specific stock ticker for analysis")
-    print("   candle      view a candle chart for a specific stock ticker")
-    print("   view        view and load a specific stock ticker for technical analysis")
-    if s_ticker:
-        print(
-            "   export      export the currently loaded dataframe to a file or stdout"
-        )
-
-    s_intraday = (f"Intraday {s_interval}", "Daily")[s_interval == "1440min"]
-    if s_ticker and s_start:
-        print(f"\n{s_intraday} Stock: {s_ticker} (from {s_start.strftime('%Y-%m-%d')})")
-    elif s_ticker:
-        print(f"\n{s_intraday} Stock: {s_ticker}")
-    else:
-        print("\nStock: ?")
-    print(f"Market {('CLOSED', 'OPEN')[b_is_market_open]}.\n")
-
-    print(
-        "   > disc        discover trending stocks, \t e.g. map, sectors, high short interest"
-    )
-    print(
-        "   > scr         screener stocks, \t\t e.g. overview/performance, using preset filters"
-    )
-    print("   > mill        papermill menu, \t\t menu to generate notebook reports")
-    print("   > econ        economic data, \t\t e.g.: FRED, events")
-    print(
-        "   > pa          portfolio analysis, \t\t supports: robinhood, alpaca, ally "
-    )
-    print(
-        "   > crypto      cryptocurrencies, \t\t from: coingecko, coinmarketcap, binance"
-    )
-    print(
-        "   > po          portfolio optimization, \t optimal portfolio weights from pyportfolioopt"
-    )
-    print("   > gov         government menu, \t\t congress, senate, house trading")
-    print("   > etf         etf menu, \t\t\t from: StockAnalysis.com")
-    print("   > fx          forex menu, \t\t\t forex support through Oanda")
-    print("   > rc          resource collection, \t\t e.g. hf letters")
-
-    if s_ticker:
-        print(
-            "   > ba          behavioural analysis,    \t from: reddit, stocktwits, twitter, google"
-        )
-        print(
-            "   > res         research web page,       \t e.g.: macroaxis, yahoo finance, fool"
-        )
-        print(
-            "   > ca          comparison analysis,     \t e.g.: historical, correlation, financials"
-        )
-        print(
-            "   > fa          fundamental analysis,    \t e.g.: income, balance, cash, earnings"
-        )
-        print(
-            "   > ta          technical analysis,      \t e.g.: ema, macd, rsi, adx, bbands, obv"
-        )
-        print(
-            "   > bt          strategy backtester,      \t e.g.: simple ema, ema cross, rsi strategies"
-        )
-        print(
-            "   > dd          in-depth due-diligence,  \t e.g.: news, analyst, shorts, insider, sec"
-        )
-        print(
-            "   > eda         exploratory data analysis,\t e.g.: decompose, cusum, residuals analysis"
-        )
-        print(
-            "   > pred        prediction techniques,   \t e.g.: regression, arima, rnn, lstm, prophet"
-        )
-        print(
-            "   > ra          residuals analysis,      \t e.g.: model fit, qqplot, hypothesis test"
-        )
-        print(
-            "   > op          options info,            \t e.g.: volume and open interest"
-        )
-    print("")
-
-
-def clear(l_args, s_ticker, s_start, s_interval, df_stock):
+def clear(other_args: List[str], s_ticker, s_start, s_interval, df_stock):
+    """Clears loaded stock and returns empty variables"""
     parser = argparse.ArgumentParser(
         add_help=False,
         prog="clear",
@@ -119,7 +45,7 @@ def clear(l_args, s_ticker, s_start, s_interval, df_stock):
     )
 
     try:
-        ns_parser = parse_known_args_and_warn(parser, l_args)
+        ns_parser = parse_known_args_and_warn(parser, other_args)
         if not ns_parser:
             return "", "", "", pd.DataFrame()
 
@@ -131,7 +57,34 @@ def clear(l_args, s_ticker, s_start, s_interval, df_stock):
         return s_ticker, s_start, s_interval, df_stock
 
 
-def load(l_args, s_ticker, s_start, s_interval, df_stock):
+def load(other_args: List[str], s_ticker, s_start, s_interval, df_stock):
+    """
+    Load selected ticker
+    Parameters
+    ----------
+    other_args:List[str]
+        Argparse arguments
+    s_ticker: str
+        Ticker
+    s_start: str
+        Start date
+    s_interval: str
+        Interval to get data for
+    df_stock: pd.DataFrame
+        Preloaded dataframe
+
+    Returns
+    -------
+    ns_parser.s_ticker :
+        Ticker
+    s_start:
+        Start date
+    str(ns_parser.n_interval) + "min":
+        Interval
+    df_stock_candidate
+        Dataframe loaded with close and volumes.
+
+    """
     parser = argparse.ArgumentParser(
         add_help=False,
         prog="load",
@@ -184,11 +137,11 @@ def load(l_args, s_ticker, s_start, s_interval, df_stock):
 
     try:
         # For the case where a user uses: 'load BB'
-        if l_args:
-            if "-" not in l_args[0]:
-                l_args.insert(0, "-t")
+        if other_args:
+            if "-t" not in other_args:
+                other_args.insert(0, "-t")
 
-        ns_parser = parse_known_args_and_warn(parser, l_args)
+        ns_parser = parse_known_args_and_warn(parser, other_args)
         if not ns_parser:
             return [s_ticker, s_start, s_interval, df_stock]
 
@@ -204,6 +157,7 @@ def load(l_args, s_ticker, s_start, s_interval, df_stock):
                 )
 
                 # Check that loading a stock was not successful
+                # pylint: disable=no-member
                 if df_stock_candidate.empty:
                     print("")
                     return [s_ticker, s_start, s_interval, df_stock]
@@ -255,8 +209,9 @@ def load(l_args, s_ticker, s_start, s_interval, df_stock):
                     outputsize="full",
                     interval=str(ns_parser.n_interval) + "min",
                 )
-
+                s_interval = str(ns_parser.n_interval) + "min"
                 # Check that loading a stock was not successful
+                # pylint: disable=no-member
                 if df_stock_candidate.empty:
                     print("")
                     return [s_ticker, s_start, s_interval, df_stock]
@@ -276,7 +231,7 @@ def load(l_args, s_ticker, s_start, s_interval, df_stock):
             # Yahoo Finance Source
             elif ns_parser.source == "yf":
                 s_int = str(ns_parser.n_interval) + "m"
-
+                s_interval = s_int
                 d_granularity = {"1m": 6, "5m": 59, "15m": 59, "30m": 59, "60m": 729}
 
                 s_start_dt = datetime.utcnow() - timedelta(days=d_granularity[s_int])
@@ -392,7 +347,119 @@ def candle(s_ticker: str, s_start: str):
     print("")
 
 
-def view(l_args, s_ticker, s_start, s_interval, df_stock):
+def quote(other_args: List[str], s_ticker: str):
+    parser = argparse.ArgumentParser(
+        add_help=False,
+        prog="quote",
+        description="Current quote for stock ticker",
+    )
+
+    if s_ticker:
+        parser.add_argument(
+            "-t",
+            "--ticker",
+            action="store",
+            dest="s_ticker",
+            default=s_ticker,
+            help="Stock ticker",
+        )
+    else:
+        parser.add_argument(
+            "-t",
+            "--ticker",
+            action="store",
+            dest="s_ticker",
+            required=True,
+            help="Stock ticker",
+        )
+
+    try:
+        # For the case where a user uses: 'quote BB'
+        if other_args:
+            if "-" not in other_args[0]:
+                other_args.insert(0, "-t")
+        ns_parser = parse_known_args_and_warn(parser, other_args)
+        if not ns_parser:
+            return
+
+    except SystemExit:
+        print("")
+        return
+
+    ticker = yf.Ticker(ns_parser.s_ticker)
+
+    try:
+        quote_df = pd.DataFrame(
+            [
+                {
+                    "Symbol": ticker.info["symbol"],
+                    "Name": ticker.info["shortName"],
+                    "Price": ticker.info["regularMarketPrice"],
+                    "Open": ticker.info["regularMarketOpen"],
+                    "High": ticker.info["dayHigh"],
+                    "Low": ticker.info["dayLow"],
+                    "Previous Close": ticker.info["previousClose"],
+                    "Volume": ticker.info["volume"],
+                    "52 Week High": ticker.info["fiftyTwoWeekHigh"],
+                    "52 Week Low": ticker.info["fiftyTwoWeekLow"],
+                }
+            ]
+        )
+
+        quote_df["Change"] = quote_df["Price"] - quote_df["Previous Close"]
+        quote_df["Change %"] = quote_df.apply(
+            lambda x: "{:.2f}%".format((x["Change"] / x["Previous Close"]) * 100),
+            axis="columns",
+        )
+        for c in [
+            "Price",
+            "Open",
+            "High",
+            "Low",
+            "Previous Close",
+            "52 Week High",
+            "52 Week Low",
+            "Change",
+        ]:
+            quote_df[c] = quote_df[c].apply(lambda x: f"{x:.2f}")
+        quote_df["Volume"] = quote_df["Volume"].apply(lambda x: f"{x:,}")
+
+        quote_df = quote_df.set_index("Symbol")
+
+        quote_data = transpose(quote_df)
+
+        print(
+            tabulate(
+                quote_data,
+                headers=quote_data.columns,
+                tablefmt="fancy_grid",
+                stralign="right",
+            )
+        )
+    except KeyError:
+        print(f"Invalid stock ticker: {ns_parser.s_ticker}")
+
+    print("")
+    return
+
+
+def view(other_args: List[str], s_ticker: str, s_start, s_interval, df_stock):
+    """
+    Plot loaded ticker or load ticker and plot
+    Parameters
+    ----------
+    other_args:List[str]
+        Argparse arguments
+    s_ticker: str
+        Ticker to load
+    s_start: str
+        Start date
+    s_interval: str
+        Interval tto get data for
+    df_stock: pd.Dataframe
+        Preloaded dataframe to plot
+
+    """
     parser = argparse.ArgumentParser(
         add_help=False,
         prog="view",
@@ -447,7 +514,7 @@ def view(l_args, s_ticker, s_start, s_interval, df_stock):
     )
 
     try:
-        ns_parser = parse_known_args_and_warn(parser, l_args)
+        ns_parser = parse_known_args_and_warn(parser, other_args)
         if not ns_parser:
             return
 
@@ -494,9 +561,6 @@ def view(l_args, s_ticker, s_start, s_interval, df_stock):
 
     df_stock.sort_index(ascending=True, inplace=True)
 
-    # Slice dataframe from the starting date YYYY-MM-DD selected
-    df_stock = df_stock[ns_parser.s_start_date :]
-
     # Daily
     if s_interval == "1440min":
         # The default doesn't exist for intradaily data
@@ -508,26 +572,27 @@ def view(l_args, s_ticker, s_start, s_interval, df_stock):
             return
         # Append last column of df to be filtered which corresponds to: 6. Volume
         ln_col_idx.append(5)
+        # Slice dataframe from the starting date YYYY-MM-DD selected
+        df_stock = df_stock[ns_parser.s_start_date :]
     # Intraday
     else:
         # The default doesn't exist for intradaily data
+        # JM edit 6-7-21 -- It seems it does
         if ns_parser.type == "a":
-            ln_col_idx = [3]
+            ln_col_idx = [4]
         else:
             ln_col_idx = [int(x) - 1 for x in list(type_candles)]
-        # Check that the types given are not bigger than 3, as there are only 4 types (0-3)
-        # pylint: disable=len-as-condition
-        if len([i for i in ln_col_idx if i > 3]) > 0:
-            print("An index bigger than 3 was given, which is wrong. Try again")
-            return
+
         # Append last column of df to be filtered which corresponds to: 5. Volume
-        ln_col_idx.append(4)
+        ln_col_idx.append(5)
+        # Slice dataframe from the starting date YYYY-MM-DD selected
+        df_stock = df_stock[ns_parser.s_start_date.strftime("%Y-%m-%d") :]
 
     # Plot view of the stock
-    plot_view_stock(df_stock.iloc[:, ln_col_idx], ns_parser.s_ticker)
+    plot_view_stock(df_stock.iloc[:, ln_col_idx], ns_parser.s_ticker, s_interval)
 
 
-def export(l_args, df_stock):
+def export(other_args: List[str], df_stock):
     parser = argparse.ArgumentParser(
         add_help=False,
         prog="export",
@@ -538,7 +603,7 @@ def export(l_args, df_stock):
         "--filename",
         type=str,
         dest="s_filename",
-        default=stdout,
+        default=sys.stdout,
         help="Name of file to save the historical data exported (stdout if unspecified)",
     )
     parser.add_argument(
@@ -550,7 +615,7 @@ def export(l_args, df_stock):
         help="Export historical data into following formats: csv, json, excel, clipboard",
     )
     try:
-        ns_parser = parse_known_args_and_warn(parser, l_args)
+        ns_parser = parse_known_args_and_warn(parser, other_args)
         if not ns_parser:
             return
 
@@ -637,3 +702,78 @@ def update_terminal():
         return completed_process.returncode
 
     return 0
+
+
+def about_us():
+    print(
+        f"\n{Fore.GREEN}Thanks for using Gamestonk Terminal. This is our way!{Style.RESET_ALL}\n"
+        "\n"
+        f"{Fore.CYAN}Join our community on discord: {Style.RESET_ALL}https://discord.gg/Up2QGbMKHY\n"
+        f"{Fore.CYAN}Follow our twitter for updates: {Style.RESET_ALL}https://twitter.com/gamestonkt\n"
+        f"{Fore.CYAN}Access our landing page: {Style.RESET_ALL}https://gamestonkterminal.vercel.app\n"
+        "\n"
+        f"{Fore.YELLOW}Author:{Style.RESET_ALL} DidierRLopes\n"
+        f"{Fore.YELLOW}Main Devs:{Style.RESET_ALL} jmaslek, aia\n"
+        "\n"
+        f"{Fore.YELLOW}Main Contributors:{Style.RESET_ALL}\n"
+        f"{Fore.MAGENTA}Working towards a GUI using Qt:{Style.RESET_ALL} piiq, hinxx\n"
+        f"{Fore.MAGENTA}Working on our landing page:{Style.RESET_ALL} jose-donato, crspy, martiaaz\n"
+        f"{Fore.MAGENTA}Managing Twitter account:{Style.RESET_ALL} Meghan Hone\n"
+        f"{Fore.MAGENTA}Responsible by developing Forex menu:{Style.RESET_ALL} alokan\n"
+        f"{Fore.MAGENTA}Degiro's integration:{Style.RESET_ALL} Chavithra, Deel18\n"
+        f"{Fore.MAGENTA}Preset screeners:{Style.RESET_ALL} Traceabl3\n"
+        "\n"
+        f"{Fore.YELLOW}Partnerships:{Style.RESET_ALL}\n"
+        f"{Fore.CYAN}FinBrain: {Style.RESET_ALL}https://finbrain.tech\n"
+        f"{Fore.CYAN}Quiver Quantitative: {Style.RESET_ALL}https://www.quiverquant.com\n"
+        f"\n{Fore.RED}"
+        "DISCLAIMER: Trading in financial instruments involves high risks including the risk of losing some, "
+        "or all, of your investment amount, and may not be suitable for all investors. Before deciding to trade in "
+        "financial instrument you should be fully informed of the risks and costs associated with trading the financial "
+        "markets, carefully consider your investment objectives, level of experience, and risk appetite, and seek "
+        "professional advice where needed. The data contained in Gamestonk Terminal (GST) is not necessarily accurate. "
+        "GST and any provider of the data contained in this website will not accept liability for any loss or damage "
+        "as a result of your trading, or your reliance on the information displayed."
+        f"\n{Style.RESET_ALL}"
+    )
+
+
+def bootup():
+    # Enable VT100 Escape Sequence for WINDOWS 10 Ver. 1607
+    if sys.platform == "win32":
+        os.system("")
+
+    try:
+        if os.name == "nt":
+            # pylint: disable=E1101
+            sys.stdin.reconfigure(encoding="utf-8")
+            # pylint: disable=E1101
+            sys.stdout.reconfigure(encoding="utf-8")
+    except Exception as e:
+        print(e, "\n")
+
+    # Print first welcome message and help
+    print(
+        f"\nWelcome to Gamestonk Terminal Beta ({str(git.Repo('.').head.commit)[:7]})"
+    )
+
+    if gtff.ENABLE_THOUGHTS_DAY:
+        print("-------------------")
+        try:
+            thought.get_thought_of_the_day()
+        except Exception as e:
+            print(e)
+        print("")
+
+
+def reset():
+    print("resetting...")
+    completed_process = subprocess.run("python terminal.py", shell=True, check=False)
+    if completed_process.returncode != 0:
+        completed_process = subprocess.run(
+            "python3 terminal.py", shell=True, check=False
+        )
+        if completed_process.returncode != 0:
+            print("Unfortunately, resetting wasn't possible!\n")
+
+    return completed_process.returncode

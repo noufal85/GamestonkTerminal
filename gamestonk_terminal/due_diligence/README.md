@@ -30,6 +30,11 @@ This menu aims to help in due-diligence of a pre-loaded stock, and the usage of 
   * dark pools (ATS) vs OTC data [FINRA]
 * [ftd](#ftd)
   * fails-to-deliver data [SEC]
+* [shortview](#shortview)
+  * shows price vs short interest volume [Stockgrid]
+* [darkpos](#darkpos)
+  * net short vs position [Stockgrid]
+
 
 ## news <a name="news"></a>
 
@@ -197,4 +202,34 @@ The fails-to-deliver data collected by SEC. Fails to deliver on a given day are 
 * -n : number of latest fails-to-deliver being printed. Default 20.
 
 ![ftd](https://user-images.githubusercontent.com/25267873/115201750-93a9bc80-a0ed-11eb-8f13-68508749259e.png)
+
+## shortview <a name="shortview"></a>
+
+```text
+usage: shortvol [-n NUM] [-r]
+```
+
+Shows price vs short interest volume. [Source: Stockgrid]
+* -r: Flag to print raw data instead. 
+* -n: Number of last open market days to show. Default: 120, but if -r is set it's 10.
+
+![shortview](https://user-images.githubusercontent.com/25267873/122646172-c4ba6380-d115-11eb-8e5c-6ee3ab70095b.png)
+
+<img width="951" alt="shortvolraw_gme" src="https://user-images.githubusercontent.com/25267873/122323990-eeaa3500-cf1f-11eb-91b9-6b9d3a4eee36.png">
+
+
+## darkpos <a name="darkpos"></a>
+
+```text
+usage: darkpos [-n NUM] [-r]
+```
+
+Shows Net Short Vol. vs Position. [Source: Stockgrid]
+* -r: Flag to print raw data instead. 
+* -n: Number of last open market days to show. Default: 120, but if -r is set it's 10.
+
+![darkpos](https://user-images.githubusercontent.com/25267873/122646991-f03f4d00-d119-11eb-971f-b554bb4cdec4.png)
+
+<img width="958" alt="darkpos_raw" src="https://user-images.githubusercontent.com/25267873/122646989-ee758980-d119-11eb-9f67-f51f0b75c49d.png">
+
 
